@@ -36,4 +36,4 @@ app:
     secret: ${APP_JWT_SECRET:lumina-mart-demo-secret-key-lumina-mart-demo-secret-key}
     expiration-ms: 86400000
   cors:
-    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174}
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,https://sanvara-ecommerce-1.onrender.com}
