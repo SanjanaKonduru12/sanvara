@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: luminamart-backend
+    env: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DB_HOST
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: "*" # To be safe across Render URLs
+
+  - type: web
+    name: luminamart-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Set this in Render Dashboard to: https://<your-backend-url>.onrender.com/api
+      - key: REACT_APP_API_URL
+        sync: false # Set this in Render Dashboard to: https://<your-backend-url>.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
