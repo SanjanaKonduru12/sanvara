@@ -6,9 +6,8 @@ RUN npm ci
 
 # Copy source and build
 COPY . .
-# Set API URL to relative path for Nginx reverse proxy
-ENV VITE_API_URL=/api
-ENV REACT_APP_API_URL=/api
+# Set API URL to Render backend
+ENV VITE_API_URL=https://sanvara-ecommerce.onrender.com/api
 RUN npm run build
 
 # Stage 2: Nginx for serving static files
