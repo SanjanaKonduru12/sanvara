@@ -35,6 +35,7 @@ export default function WishlistPage({ auth }) {
       }
     };
 
+
     loadWishlist();
   }, [auth, navigate, showToast]);
 
