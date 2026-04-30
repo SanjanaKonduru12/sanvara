@@ -1,8 +1,9 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:h2:mem:luminamart;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-    username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:}
+    url: jdbc:mysql://${MYSQLHOST}:${MYSQLPORT}/${MYSQLDATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQLUSER}
+    password: ${MYSQLPASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:10}
       minimum-idle: ${DB_MIN_IDLE:0}
@@ -10,13 +11,10 @@ spring:
       validation-timeout: ${DB_VALIDATION_TIMEOUT_MS:5000}
       initialization-fail-timeout: -1
   jpa:
-    database-platform: ${JPA_DATABASE_PLATFORM:org.hibernate.dialect.H2Dialect}
+    database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:none}
-    properties:
-      hibernate:
-        boot:
-          allow_jdbc_metadata_access: false
+      ddl-auto: update
+    show-sql: true
 
 app:
   seed:

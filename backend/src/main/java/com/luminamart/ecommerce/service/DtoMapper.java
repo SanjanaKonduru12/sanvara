@@ -10,7 +10,9 @@ import com.luminamart.ecommerce.model.PriceAlert;
 import com.luminamart.ecommerce.model.Product;
 import com.luminamart.ecommerce.model.Review;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public final class DtoMapper {
@@ -21,6 +23,10 @@ public final class DtoMapper {
     }
 
     public static ProductDtos.CategorySummary toCategorySummary(Category category) {
+        if (category == null) {
+            return null;
+        }
+
         return new ProductDtos.CategorySummary(
                 category.getId(),
                 category.getName(),
@@ -31,6 +37,10 @@ public final class DtoMapper {
     }
 
     public static ProductDtos.OccasionSummary toOccasionSummary(Occasion occasion) {
+        if (occasion == null) {
+            return null;
+        }
+
         return new ProductDtos.OccasionSummary(
                 occasion.getId(),
                 occasion.getName(),
@@ -41,7 +51,11 @@ public final class DtoMapper {
     }
 
     public static ProductDtos.ProductCard toProductCard(Product product) {
-        List<String> occasions = product.getOccasions().stream()
+        if (product == null) {
+            return null;
+        }
+
+        List<String> occasions = Optional.ofNullable(product.getOccasions()).orElseGet(Collections::emptySet).stream()
                 .map(Occasion::getName)
                 .collect(Collectors.toList());
 
@@ -65,7 +79,16 @@ public final class DtoMapper {
     }
 
     public static ProductDtos.ReviewView toReviewView(Review review) {
-        String reviewerName = review.getUser().getFirstName() + " " + review.getUser().getLastName();
+        String reviewerName = "Customer";
+        if (review.getUser() != null) {
+            reviewerName = List.of(review.getUser().getFirstName(), review.getUser().getLastName()).stream()
+                    .filter(name -> name != null && !name.isBlank())
+                    .collect(Collectors.joining(" "));
+            if (reviewerName.isBlank()) {
+                reviewerName = review.getUser().getEmail();
+            }
+        }
+
         return new ProductDtos.ReviewView(
                 review.getId(),
                 review.getRating(),
@@ -78,10 +101,14 @@ public final class DtoMapper {
 
     public static ShopperDtos.CartItemView toCartItemView(CartItem item) {
         ProductDtos.ProductCard productCard = toProductCard(item.getProduct());
-        BigDecimal totalPrice = item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+        BigDecimal unitPrice = Optional.ofNullable(item.getProduct())
+                .map(Product::getPrice)
+                .orElse(BigDecimal.ZERO);
+        int quantity = Optional.ofNullable(item.getQuantity()).orElse(0);
+        BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
         return new ShopperDtos.CartItemView(
                 item.getId(),
-                item.getQuantity(),
+                quantity,
                 item.getSizeOption(),
                 item.getColorOption(),
                 productCard,
@@ -113,11 +140,12 @@ public final class DtoMapper {
     }
 
     private static String resolveProductImage(Product product) {
-        if (product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
+        if (product != null && product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
             return product.getImageUrl();
         }
 
-        if (product.getCategory() != null
+        if (product != null
+                && product.getCategory() != null
                 && product.getCategory().getImageUrl() != null
                 && !product.getCategory().getImageUrl().isBlank()) {
             return product.getCategory().getImageUrl();

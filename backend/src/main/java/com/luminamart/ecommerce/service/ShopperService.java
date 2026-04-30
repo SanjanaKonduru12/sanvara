@@ -17,8 +17,10 @@ import com.luminamart.ecommerce.repository.ProductRepository;
 import com.luminamart.ecommerce.repository.ReviewRepository;
 import com.luminamart.ecommerce.repository.WishlistItemRepository;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -311,15 +313,15 @@ public class ShopperService {
     }
 
     private ShopperDtos.OrderView mapOrder(CustomerOrder order) {
-        List<ShopperDtos.OrderItemView> items = order.getItems().stream()
+        List<ShopperDtos.OrderItemView> items = Optional.ofNullable(order.getItems()).orElseGet(Collections::emptyList).stream()
                 .map(DtoMapper::toOrderItemView)
                 .collect(Collectors.toList());
         return new ShopperDtos.OrderView(
                 order.getId(),
                 order.getOrderNumber(),
-                order.getStatus().name(),
-                order.getTotalAmount(),
-                order.getItemCount(),
+                order.getStatus() == null ? "PLACED" : order.getStatus().name(),
+                Optional.ofNullable(order.getTotalAmount()).orElse(BigDecimal.ZERO),
+                Optional.ofNullable(order.getItemCount()).orElse(0),
                 order.getShippingName(),
                 order.getShippingAddress(),
                 order.getCity(),

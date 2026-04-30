@@ -9,14 +9,16 @@ services:
         value: prod
       - key: PORT
         value: 8080
-      - key: DB_URL
+      - key: MYSQLHOST
         sync: false
-      - key: DB_USERNAME
+      - key: MYSQLPORT
+        value: 3306
+      - key: MYSQLDATABASE
         sync: false
-      - key: DB_PASSWORD
+      - key: MYSQLUSER
         sync: false
-      - key: JPA_DATABASE_PLATFORM
-        value: org.hibernate.dialect.MySQLDialect
+      - key: MYSQLPASSWORD
+        sync: false
       - key: APP_JWT_SECRET
         generateValue: true
       - key: APP_CORS_ALLOWED_ORIGINS

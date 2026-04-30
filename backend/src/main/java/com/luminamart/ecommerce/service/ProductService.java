@@ -13,8 +13,10 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -186,42 +188,45 @@ public class ProductService {
     }
 
     private ProductDtos.PriceInsight buildPriceInsight(BigDecimal currentPrice, List<ProductDtos.PricePoint> history) {
-        if (history.isEmpty()) {
+        BigDecimal normalizedCurrentPrice = Optional.ofNullable(currentPrice).orElse(BigDecimal.ZERO);
+        List<ProductDtos.PricePoint> normalizedHistory = Optional.ofNullable(history).orElseGet(Collections::emptyList);
+
+        if (normalizedHistory.isEmpty()) {
             return new ProductDtos.PriceInsight(
-                    currentPrice,
-                    currentPrice,
-                    currentPrice,
-                    currentPrice,
-                    currentPrice,
+                    normalizedCurrentPrice,
+                    normalizedCurrentPrice,
+                    normalizedCurrentPrice,
+                    normalizedCurrentPrice,
+                    normalizedCurrentPrice,
                     "Price data is loading.",
-                    history
+                    normalizedHistory
             );
         }
 
-        BigDecimal lowest = history.stream().map(ProductDtos.PricePoint::price).min(BigDecimal::compareTo).orElse(currentPrice);
-        BigDecimal highest = history.stream().map(ProductDtos.PricePoint::price).max(BigDecimal::compareTo).orElse(currentPrice);
-        BigDecimal average = history.stream()
+        BigDecimal lowest = normalizedHistory.stream().map(ProductDtos.PricePoint::price).min(BigDecimal::compareTo).orElse(normalizedCurrentPrice);
+        BigDecimal highest = normalizedHistory.stream().map(ProductDtos.PricePoint::price).max(BigDecimal::compareTo).orElse(normalizedCurrentPrice);
+        BigDecimal average = normalizedHistory.stream()
                 .map(ProductDtos.PricePoint::price)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(history.size()), 2, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(normalizedHistory.size()), 2, RoundingMode.HALF_UP);
 
-        BigDecimal predicted = currentPrice;
-        if (history.size() >= 2) {
-            BigDecimal firstPrice = history.get(0).price();
-            BigDecimal latestPrice = history.get(history.size() - 1).price();
+        BigDecimal predicted = normalizedCurrentPrice;
+        if (normalizedHistory.size() >= 2) {
+            BigDecimal firstPrice = normalizedHistory.get(0).price();
+            BigDecimal latestPrice = normalizedHistory.get(normalizedHistory.size() - 1).price();
             BigDecimal trend = latestPrice.subtract(firstPrice)
-                    .divide(BigDecimal.valueOf(history.size() - 1), 2, RoundingMode.HALF_UP);
+                    .divide(BigDecimal.valueOf(normalizedHistory.size() - 1), 2, RoundingMode.HALF_UP);
             predicted = latestPrice.add(trend.multiply(BigDecimal.valueOf(0.75)));
             if (predicted.compareTo(BigDecimal.ZERO) < 0) {
                 predicted = latestPrice;
             }
         }
 
-        String recommendation = predicted.compareTo(currentPrice) <= 0
+        String recommendation = predicted.compareTo(normalizedCurrentPrice) <= 0
                 ? "The product is trending downward. Great time to buy."
                 : "Price may climb soon. Grab it while it is still affordable.";
 
-        return new ProductDtos.PriceInsight(currentPrice, lowest, highest, average, predicted, recommendation, history);
+        return new ProductDtos.PriceInsight(normalizedCurrentPrice, lowest, highest, average, predicted, recommendation, normalizedHistory);
     }
 
     private String normalizeKey(String value) {
