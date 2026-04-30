@@ -106,7 +106,7 @@ npm install
 npm run dev
 ```
 
-The frontend will run on `http://localhost:5173` and call backend APIs at `http://localhost:8080/api`.
+The frontend runs on Vite locally and calls the API configured by `VITE_API_BASE_URL`.
 
 ## Notes
 
