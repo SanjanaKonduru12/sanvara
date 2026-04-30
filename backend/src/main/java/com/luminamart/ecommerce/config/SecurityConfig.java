@@ -1,122 +1,49 @@
-package com.luminamart.ecommerce.config;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.luminamart.ecommerce.security.CustomUserDetailsService;
-import com.luminamart.ecommerce.security.JwtAuthenticationFilter;
-import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Map;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
-@EnableMethodSecurity
 public class SecurityConfig {
 
-    private final ObjectMapper objectMapper;
-
-    public SecurityConfig(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
-
     @Bean
-    public UserDetailsService userDetailsService(CustomUserDetailsService service) {
-        return service;
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
-        return provider;
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            CorsConfigurationSource corsConfigurationSource,
-            JwtAuthenticationFilter jwtAuthenticationFilter,
-            AuthenticationProvider authenticationProvider
-    ) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Enable CORS FIRST, before other security configurations
-                .cors(cors -> cors.configurationSource(corsConfigurationSource))
-                // Disable CSRF for API
-                .csrf(csrf -> csrf.disable())
-                // Security headers with CORS-friendly CSP
-                .headers(headers -> headers
-                        // CSP that allows CORS requests to specified origins
-                        .contentSecurityPolicy(csp -> csp.policyDirectives(
-                                "default-src 'self'; " +
-                                "script-src 'self' 'unsafe-inline'; " +
-                                "style-src 'self' 'unsafe-inline'; " +
-                                "img-src 'self' data: https:; " +
-                                "font-src 'self' data:; " +
-                                "connect-src 'self' https://luminamart-backend-production.up.railway.app http://localhost:*; " +
-                                "frame-ancestors 'none';"
-                        ))
-                        .frameOptions(frame -> frame.deny())
-                        .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
-                        .xssProtection(xss -> xss.headerValue(org.springframework.security.web.header.writers.XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK))
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authenticationProvider(authenticationProvider)
-                .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint((request, response, authException) ->
-                                writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "Please sign in to continue."))
-                        .accessDeniedHandler((request, response, accessDeniedException) ->
-                                writeError(response, HttpServletResponse.SC_FORBIDDEN, "You do not have permission to access this resource."))
-                )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/reset-password").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/home", "/api/home/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/categories", "/api/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/occasions", "/api/occasions/**").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/recommendations").permitAll()
-                        .requestMatchers("/api/shop/cart/**", "/api/shop/wishlist/**", "/api/shop/dashboard", "/api/shop/orders/**").authenticated()
-                        .requestMatchers("/api/cart/**", "/api/wishlist/**", "/api/profile/**").authenticated()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .cors().configurationSource(corsConfigurationSource())
+            .and()
+            .csrf().disable()
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/api/products/**",
+                    "/api/home/**",
+                    "/api/categories/**",
+                    "/api/occasions/**"
+                ).permitAll()
+                .anyRequest().authenticated()
+            );
 
         return http.build();
     }
 
-    private void writeError(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        objectMapper.writeValue(response.getWriter(), Map.of(
-                "status", status,
-                "message", message
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+
+        config.setAllowedOrigins(List.of(
+            "https://luminamart-frontend-production.up.railway.app"
         ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
     }
 }
