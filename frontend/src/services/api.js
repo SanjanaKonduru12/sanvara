@@ -1,23 +1,17 @@
 import axios from "axios";
 import { emitAuthExpired } from "../lib/events";
 
-// ✅ Get API URL from environment
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// 🔍 Debug (check in browser console)
-console.log("API URL:", API_BASE_URL);
-
-// ❌ Safety check (avoid silent failure)
 if (!API_BASE_URL) {
-  throw new Error("VITE_API_URL is not defined");
+  throw new Error("VITE_API_BASE_URL is not defined");
 }
 
-// ✅ Ensure correct base URL (no trailing slash issues)
-const API_URL = API_BASE_URL.endsWith("/api")
-  ? API_BASE_URL
-  : `${API_BASE_URL}/api`;
+const normalizedBaseUrl = API_BASE_URL.replace(/\/+$/, "");
+export const API_URL = normalizedBaseUrl.endsWith("/api")
+  ? normalizedBaseUrl
+  : `${normalizedBaseUrl}/api`;
 
-// ✅ Axios instance
 const api = axios.create({
   baseURL: API_URL,
   timeout: 60000,
@@ -26,7 +20,6 @@ const api = axios.create({
   },
 });
 
-// 🔐 Request interceptor (attach token)
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("lm_token");
 
@@ -41,7 +34,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 🔁 Response interceptor
 api.interceptors.response.use(
   (response) => {
     console.debug(
@@ -53,7 +45,6 @@ api.interceptors.response.use(
   async (error) => {
     const config = error.config;
 
-    // 🔁 Retry logic for 503 errors
     if (
       error.response?.status === 503 &&
       config &&
@@ -64,18 +55,15 @@ api.interceptors.response.use(
       if (config._retryCount < 3) {
         config._retryCount += 1;
 
-        console.warn(
-          `[API] 503 retry attempt ${config._retryCount}/3`
-        );
+        console.warn(`[API] 503 retry attempt ${config._retryCount}/3`);
 
         await new Promise((res) => setTimeout(res, 15000));
         return api(config);
-      } else {
-        config._isRetryExhausted = true;
       }
+
+      config._isRetryExhausted = true;
     }
 
-    // 🔐 Handle 401 (auth expired)
     if (
       error.response?.status === 401 &&
       localStorage.getItem("lm_token")
@@ -94,13 +82,16 @@ api.interceptors.response.use(
   }
 );
 
-// 📦 Utility for readable errors
 export function getApiErrorMessage(
   error,
   fallback = "Something went wrong. Please try again."
 ) {
   if (error.code === "ECONNABORTED") {
     return "Request timed out. Please check your connection.";
+  }
+
+  if (!error.response) {
+    return "Unable to reach the server. Please check your connection and try again.";
   }
 
   if (error.response?.status === 503) {

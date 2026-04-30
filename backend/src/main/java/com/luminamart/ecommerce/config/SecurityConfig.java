@@ -78,7 +78,7 @@ public class SecurityConfig {
                                 "style-src 'self' 'unsafe-inline'; " +
                                 "img-src 'self' data: https:; " +
                                 "font-src 'self' data:; " +
-                                "connect-src 'self' https://sanvara-ecommerce-1.onrender.com https://sanvara-ecommerce.onrender.com http://localhost:*; " +
+                                "connect-src 'self' https://luminamart-backend-production.up.railway.app http://localhost:*; " +
                                 "frame-ancestors 'none';"
                         ))
                         .frameOptions(frame -> frame.deny())
@@ -94,12 +94,16 @@ public class SecurityConfig {
                                 writeError(response, HttpServletResponse.SC_FORBIDDEN, "You do not have permission to access this resource."))
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/home").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/reset-password").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/home", "/api/home/**").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/occasions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/recommendations").permitAll()
+                        .requestMatchers("/api/shop/cart/**", "/api/shop/wishlist/**", "/api/shop/dashboard", "/api/shop/orders/**").authenticated()
+                        .requestMatchers("/api/cart/**", "/api/wishlist/**", "/api/profile/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
