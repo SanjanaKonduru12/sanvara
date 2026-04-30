@@ -63,6 +63,29 @@ export default function CartPage({ auth }) {
     }
   };
 
+  const handleMoveToWishlist = async (item) => {
+    try {
+      await api.delete(`/shop/cart/${item.id}`);
+      await api.post(`/shop/wishlist?productId=${item.product.id}`);
+      
+      setCart((prevCart) => {
+        const newItems = prevCart.items.filter((i) => i.id !== item.id);
+        const newSubtotal = newItems.reduce((sum, i) => sum + i.totalPrice, 0);
+        return {
+          ...prevCart,
+          items: newItems,
+          subtotal: newSubtotal,
+          totalItems: newItems.reduce((sum, i) => sum + i.quantity, 0)
+        };
+      });
+      
+      showToast({ title: 'Moved', message: 'Item moved to wishlist', tone: 'success' });
+      window.dispatchEvent(new Event(SHOP_UPDATED_EVENT));
+    } catch (err) {
+      showToast({ title: 'Error', message: 'Failed to move item', tone: 'error' });
+    }
+  };
+
   if (!auth) {
     return null;
   }
@@ -102,12 +125,20 @@ export default function CartPage({ auth }) {
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">Total: ${item.totalPrice.toFixed(2)}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleRemove(item.id)}
-                  className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
-                >
-                  Remove
-                </button>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button
+                    onClick={() => handleMoveToWishlist(item)}
+                    className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    Move to Wishlist
+                  </button>
+                  <button
+                    onClick={() => handleRemove(item.id)}
+                    className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             ))
           ) : (
@@ -124,12 +155,12 @@ export default function CartPage({ auth }) {
             <p className="text-sm text-slate-500 dark:text-slate-400">Cart summary</p>
             <p className="text-3xl font-semibold text-slate-900 dark:text-white">${cart?.subtotal?.toFixed(2) || '0.00'}</p>
           </div>
-          <button
-            onClick={() => navigate('/checkout')}
-            className="rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
-          >
-            Proceed to Checkout
-          </button>
+            <button
+              onClick={() => navigate('/checkout')}
+              className="rounded-full bg-brand-600 px-8 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 shadow-lg shadow-brand-500/30"
+            >
+              Buy Now
+            </button>
         </div>
       </div>
     </div>

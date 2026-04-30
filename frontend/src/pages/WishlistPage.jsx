@@ -50,6 +50,23 @@ export default function WishlistPage({ auth }) {
     }
   };
 
+  const handleAddToCart = async (product) => {
+    try {
+      await api.post('/shop/cart', {
+        productId: product.id,
+        quantity: 1,
+        sizeOption: 'M',
+        colorOption: 'Black'
+      });
+      await api.delete(`/shop/wishlist/${product.id}`);
+      setWishlist((prev) => prev.filter((item) => item.product.id !== product.id));
+      showToast({ title: 'Success', message: 'Moved to Cart', tone: 'success' });
+      window.dispatchEvent(new Event(SHOP_UPDATED_EVENT));
+    } catch (err) {
+      showToast({ title: 'Error', message: 'Failed to move to cart', tone: 'error' });
+    }
+  };
+
   if (!auth) {
     return null;
   }
@@ -87,18 +104,18 @@ export default function WishlistPage({ auth }) {
                   <p className="text-sm text-slate-500 dark:text-slate-400">{item.product.brand}</p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <button
                   onClick={() => handleRemove(item.product.id)}
-                  className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100"
+                  className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
                 >
                   Remove
                 </button>
                 <button
-                  onClick={() => navigate(`/products/${item.product.id}`)}
-                  className="rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+                  onClick={() => handleAddToCart(item.product)}
+                  className="rounded-full bg-brand-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 shadow-lg shadow-brand-500/30"
                 >
-                  View product
+                  Move to Cart
                 </button>
               </div>
             </div>

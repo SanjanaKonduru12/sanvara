@@ -5,17 +5,19 @@ services:
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
     envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
       - key: PORT
         value: 8080
-      - key: DB_HOST
+      - key: DB_URL
         sync: false
-      - key: DB_NAME
-        sync: false
-      - key: DB_USER
+      - key: DB_USERNAME
         sync: false
       - key: DB_PASSWORD
         sync: false
-      - key: JWT_SECRET
+      - key: JPA_DATABASE_PLATFORM
+        value: org.hibernate.dialect.MySQLDialect
+      - key: APP_JWT_SECRET
         generateValue: true
       - key: APP_CORS_ALLOWED_ORIGINS
         value: "https://sanvara-ecommerce-1.onrender.com"

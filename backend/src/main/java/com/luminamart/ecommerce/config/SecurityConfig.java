@@ -5,11 +5,7 @@ import com.luminamart.ecommerce.security.CustomUserDetailsService;
 import com.luminamart.ecommerce.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -25,9 +21,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.context.annotation.Bean;
 
 @Configuration
 @EnableMethodSecurity
@@ -35,45 +30,8 @@ public class SecurityConfig {
 
     private final ObjectMapper objectMapper;
 
-    @Value("${app.cors.allowed-origins}")
-    private String allowedOrigins;
-
     public SecurityConfig(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Parse allowed origins from property
-        List<String> origins = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .toList();
-        
-        // Allow specified origins
-        configuration.setAllowedOrigins(origins);
-        
-        // Allow all HTTP methods
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        
-        // Allow all headers
-        configuration.setAllowedHeaders(List.of("*"));
-        
-        // Expose Authorization header for JWT
-        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
-        
-        // Allow credentials (cookies, authentication headers)
-        configuration.setAllowCredentials(true);
-        
-        // Cache CORS preflight response for 1 hour
-        configuration.setMaxAge(3600L);
-        
-        // Apply to all endpoints
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        
-        return source;
     }
 
     @Bean
@@ -102,12 +60,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
+            CorsConfigurationSource corsConfigurationSource,
             JwtAuthenticationFilter jwtAuthenticationFilter,
             AuthenticationProvider authenticationProvider
     ) throws Exception {
         http
                 // Enable CORS FIRST, before other security configurations
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 // Disable CSRF for API
                 .csrf(csrf -> csrf.disable())
                 // Security headers with CORS-friendly CSP

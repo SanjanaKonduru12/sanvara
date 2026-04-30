@@ -1,29 +1,42 @@
 server:
   port: ${PORT:8081}
-
+  shutdown: graceful
+  
 spring:
-  # Exclude data source if strictly requested, BUT this will break Repositories. 
-  # Instead, we use H2 in-memory database which is already in your pom.xml!
+  main:
+    lazy-initialization: true
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   datasource:
-    url: jdbc:h2:mem:luminamart;DB_CLOSE_DELAY=-1
-    username: sa
-    password: 
-    driver-class-name: org.h2.Driver
+    url: ${DB_URL:jdbc:h2:mem:luminamart;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: ${DB_MIN_IDLE:0}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:30000}
+      validation-timeout: ${DB_VALIDATION_TIMEOUT_MS:5000}
+      idle-timeout: ${DB_IDLE_TIMEOUT_MS:600000}
+      max-lifetime: ${DB_MAX_LIFETIME_MS:1800000}
+      auto-commit: true
+      initialization-fail-timeout: -1
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${JPA_DDL_AUTO:update}
     open-in-view: false
-    database-platform: org.hibernate.dialect.H2Dialect
     properties:
       hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: false
+        use_sql_comments: false
+        jdbc:
+          batch_size: 20
+          fetch_size: 50
     show-sql: false
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: your-email@gmail.com
-    password: your-app-password
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:your-email@gmail.com}
+    password: ${MAIL_PASSWORD:your-app-password}
     properties:
       mail:
         smtp:
@@ -31,9 +44,19 @@ spring:
           starttls:
             enable: true
 
+logging:
+  level:
+    root: INFO
+    com.luminamart.ecommerce: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
 app:
+  seed:
+    enabled: ${APP_SEED_ENABLED:true}
   jwt:
     secret: ${APP_JWT_SECRET:lumina-mart-demo-secret-key-lumina-mart-demo-secret-key}
     expiration-ms: 86400000
   cors:
-    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,https://sanvara-ecommerce-1.onrender.com}
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:*}

@@ -28,7 +28,7 @@ const api = axios.create({
 
 // 🔐 Request interceptor (attach token)
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("in_token");
+  const token = localStorage.getItem("lm_token");
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -78,7 +78,7 @@ api.interceptors.response.use(
     // 🔐 Handle 401 (auth expired)
     if (
       error.response?.status === 401 &&
-      localStorage.getItem("in_token")
+      localStorage.getItem("lm_token")
     ) {
       emitAuthExpired();
     }

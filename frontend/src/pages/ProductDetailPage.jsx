@@ -84,6 +84,7 @@ export default function ProductDetailPage({ auth }) {
       });
       setMessage('Added to cart successfully.');
       showToast({ title: 'Added to cart', message: `${product.product.name} is now in your cart.`, tone: 'success' });
+      window.dispatchEvent(new Event(SHOP_UPDATED_EVENT));
     } catch (requestError) {
       const nextMessage = getApiErrorMessage(requestError, 'Unable to add item.');
       setMessage(nextMessage);

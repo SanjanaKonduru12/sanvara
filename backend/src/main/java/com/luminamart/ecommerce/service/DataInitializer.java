@@ -16,12 +16,19 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true", matchIfMissing = true)
 public class DataInitializer implements ApplicationRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
     private final CategoryRepository categoryRepository;
     private final OccasionRepository occasionRepository;
@@ -40,11 +47,12 @@ public class DataInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (productRepository.count() >= 120) {
-            return;
-        }
+        try {
+            if (productRepository.count() >= 120) {
+                return;
+            }
 
-        Category clothing = createCategory("Clothing", "clothing", "Wardrobe staples for men, women, and kids.", "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=800&q=80");
+            Category clothing = createCategory("Clothing", "clothing", "Wardrobe staples for men, women, and kids.", "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=800&q=80");
         Category menClothing = createCategory("Men Clothing", "men-clothing", "Tailored essentials, relaxed layers, and work-ready menswear.", "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80");
         Category womenClothing = createCategory("Women Clothing", "women-clothing", "From elevated basics to event-ready statement outfits.", "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80");
         Category footwear = createCategory("Footwear", "footwear", "Shoes designed for comfort and style.", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80");
@@ -92,7 +100,10 @@ public class DataInitializer implements ApplicationRunner {
         seedSeries(kids, "Kids Active", "Play", "TinyTrail", casual, sports, List.of("Graphic Hoodie", "Jogger Set", "Play Tee", "School Jacket", "Mini Sneakers"), List.of("https://images.unsplash.com/photo-1519238359922-989348752efb?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1544441893-675973e31985?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=900&q=80"), new BigDecimal("19.99"), "Durable comfort and playful styling made for school runs, weekends, and movement.", "#F97316");
         seedSeries(electronics, "Smart Devices", "Connected", "PulseLab", casual, formal, List.of("Wireless Earbuds", "Productivity Laptop", "Smart Watch", "Bluetooth Speaker", "Compact Camera"), List.of("https://images.unsplash.com/photo-1511376777868-611b54f68947?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80"), new BigDecimal("79.99"), "Reliable tech essentials designed for entertainment, focus, and smooth daily routines.", "#0F172A");
         seedSeries(footwear, "Performance", "Motion", "AeroFit", sports, casual, List.of("Training Sneakers", "Runner", "Court Shoe", "Trail Shoe", "Recovery Slides"), List.of("https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1514989940723-e8e51635b782?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=900&q=80"), new BigDecimal("49.99"), "Responsive cushioning, stable support, and all-day comfort for movement-heavy schedules.", "#111827");
-        seedSeries(accessories, "Finishers", "Accent", "Maison Loop", festive, party, List.of("Shoulder Bag", "Aviator Shades", "Chain Wallet", "Statement Watch", "Travel Backpack"), List.of("https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1521335629791-ce4aec67dd64?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80"), new BigDecimal("24.99"), "High-impact finishing pieces that lift a look instantly without sacrificing practicality.", "#38BDF8");
+            seedSeries(accessories, "Finishers", "Accent", "Maison Loop", festive, party, List.of("Shoulder Bag", "Aviator Shades", "Chain Wallet", "Statement Watch", "Travel Backpack"), List.of("https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1521335629791-ce4aec67dd64?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80"), new BigDecimal("24.99"), "High-impact finishing pieces that lift a look instantly without sacrificing practicality.", "#38BDF8");
+        } catch (DataAccessException ex) {
+            log.warn("Skipping catalog data initialization because the database is not available: {}", ex.getMostSpecificCause().getMessage());
+        }
     }
 
     private Category createCategory(String name, String slug, String description, String imageUrl) {

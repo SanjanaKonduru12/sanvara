@@ -92,10 +92,10 @@ export default function ProfilePage({ auth }) {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Cart Items" value={dashboard?.cart?.totalItems || 0} icon="🛒" />
         <StatCard label="Wishlist" value={dashboard?.wishlistCount || 0} icon="❤️" />
-        <StatCard label="Orders" value={orders.length} icon="📦" />
+        <StatCard label="Orders" value={orders?.length || 0} icon="📦" />
         <StatCard
           label="Total Spent"
-          value={`$${orders.reduce((sum, o) => sum + Number(o.totalAmount || 0), 0).toFixed(2)}`}
+          value={`$${(orders || []).reduce((sum, o) => sum + Number(o.totalAmount || 0), 0).toFixed(2)}`}
           icon="💰"
         />
       </div>
@@ -115,7 +115,7 @@ export default function ProfilePage({ auth }) {
           </Link>
         </div>
 
-        {orders.length === 0 ? (
+        {(!orders || orders.length === 0) ? (
           <div className="mt-8 rounded-3xl border border-dashed border-slate-300 bg-white/70 p-10 text-center dark:border-slate-700 dark:bg-slate-900/70">
             <p className="text-lg font-semibold text-slate-900 dark:text-white">No orders yet</p>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
