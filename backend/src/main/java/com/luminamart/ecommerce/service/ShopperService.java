@@ -282,8 +282,9 @@ public class ShopperService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found."));
 
-        if (wishlistItemRepository.findByUserAndProduct(user, product).isPresent()) {
-            throw new IllegalArgumentException("Product already added to wishlist.");
+        Optional<WishlistItem> existingItem = wishlistItemRepository.findByUserAndProduct(user, product);
+        if (existingItem.isPresent()) {
+            return DtoMapper.toCartItemView(buildCartItemFromWishlist(existingItem.get()));
         }
 
         WishlistItem item = new WishlistItem();

@@ -4,7 +4,7 @@ import ProductCard from '../components/ProductCard';
 import { HeroSkeleton, ProductGridSkeleton } from '../components/LoadingSkeletons';
 import api, { getApiErrorMessage } from '../services/api';
 
-export default function OccasionPage() {
+export default function OccasionPage({ auth }) {
   const { occasionSlug } = useParams();
   const [occasion, setOccasion] = useState(null);
   const [products, setProducts] = useState([]);
@@ -110,7 +110,7 @@ export default function OccasionPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} auth={auth} />
             ))}
           </div>
         )}

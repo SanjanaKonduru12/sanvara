@@ -11,7 +11,7 @@ const defaultFilters = {
   sort: 'featured',
 };
 
-export default function ProductsPage() {
+export default function ProductsPage({ auth }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState(() => ({
     query: searchParams.get('query') || defaultFilters.query,
@@ -226,7 +226,7 @@ export default function ProductsPage() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} auth={auth} />
               ))}
             </div>
           )}

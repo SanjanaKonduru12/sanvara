@@ -73,6 +73,11 @@ export default function ProductDetailPage({ auth }) {
   }, [id, auth]);
 
   const addToCart = async () => {
+    if (!auth) {
+      showToast({ title: 'Authentication required', message: 'Please log in to add items to your cart.', tone: 'error' });
+      return;
+    }
+
     setMessage('');
 
     try {

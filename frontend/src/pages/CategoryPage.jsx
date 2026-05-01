@@ -4,7 +4,7 @@ import ProductCard from '../components/ProductCard';
 import { HeroSkeleton, ProductGridSkeleton } from '../components/LoadingSkeletons';
 import api, { getApiErrorMessage } from '../services/api';
 
-export default function CategoryPage() {
+export default function CategoryPage({ auth }) {
   const { categorySlug } = useParams();
   const [products, setProducts] = useState([]);
   const [categoryName, setCategoryName] = useState('');
@@ -93,7 +93,7 @@ export default function CategoryPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} auth={auth} />
           ))}
         </div>
       )}

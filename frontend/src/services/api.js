@@ -1,11 +1,11 @@
 import axios from "axios";
 import { emitAuthExpired } from "../lib/events";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-if (!API_BASE_URL) {
-  throw new Error("VITE_API_BASE_URL is not defined");
-}
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+    ? "http://localhost:8080"
+    : window.location.origin);
 
 const normalizedBaseUrl = API_BASE_URL.replace(/\/+$/, "");
 export const API_URL = normalizedBaseUrl.endsWith("/api")

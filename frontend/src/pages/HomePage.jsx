@@ -21,7 +21,7 @@ async function loadHomeFallback() {
   };
 }
 
-export default function HomePage() {
+export default function HomePage({ auth }) {
   const [home, setHome] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -157,7 +157,7 @@ export default function HomePage() {
             </div>
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {home.featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} auth={auth} />
               ))}
             </div>
           </section>
@@ -196,7 +196,7 @@ export default function HomePage() {
         </div>
         <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {home.newestProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} auth={auth} />
           ))}
         </div>
       </section>

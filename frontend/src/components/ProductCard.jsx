@@ -1,5 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
+import { SHOP_UPDATED_EVENT } from '../lib/events';
 import { getProductImageUrl, handleProductImageError } from '../lib/productMedia';
+import api, { getApiErrorMessage } from '../services/api';
 
 function StarRating({ rating }) {
   const stars = [];
@@ -18,10 +22,15 @@ function StarRating({ rating }) {
 
 export default function ProductCard({
   product,
+  auth,
   isWishlisted = false,
   onToggleWishlist,
   wishlistBusy = false,
 }) {
+  const [localWishlisted, setLocalWishlisted] = useState(isWishlisted);
+  const [isCartBusy, setIsCartBusy] = useState(false);
+  const [isLocalWishlistBusy, setIsLocalWishlistBusy] = useState(false);
+  const { showToast } = useToast();
   const rating = Number(product.ratingAverage || 0).toFixed(1);
   const price = Number(product.price || 0).toFixed(2);
   const compareAtPrice = product.compareAtPrice ? Number(product.compareAtPrice).toFixed(2) : null;
@@ -35,6 +44,66 @@ export default function ProductCard({
       : product.stockCount > 0
         ? 'bg-amber-500/90 text-white'
         : 'bg-red-500/90 text-white';
+  const isWishlistActive = onToggleWishlist ? isWishlisted : localWishlisted;
+  const isWishlistDisabled = onToggleWishlist ? wishlistBusy : isLocalWishlistBusy;
+  const hasAuth = Boolean(auth || localStorage.getItem('lm_token'));
+
+  useEffect(() => {
+    setLocalWishlisted(isWishlisted);
+  }, [isWishlisted]);
+
+  const handleAddToCart = async () => {
+    if (!hasAuth) {
+      showToast({ title: 'Login required', message: 'Please sign in to add items to your cart.', tone: 'error' });
+      return;
+    }
+
+    setIsCartBusy(true);
+    try {
+      await api.post('/shop/cart', {
+        productId: product.id,
+        quantity: 1,
+        sizeOption: 'M',
+        colorOption: 'Black',
+      });
+      showToast({ title: 'Added to cart', message: `${product.name} is now in your cart.`, tone: 'success' });
+      window.dispatchEvent(new Event(SHOP_UPDATED_EVENT));
+    } catch (error) {
+      showToast({ title: 'Cart update failed', message: getApiErrorMessage(error, 'Unable to add item to cart.'), tone: 'error' });
+    } finally {
+      setIsCartBusy(false);
+    }
+  };
+
+  const handleWishlistClick = async () => {
+    if (onToggleWishlist) {
+      onToggleWishlist(product);
+      return;
+    }
+
+    if (!hasAuth) {
+      showToast({ title: 'Login required', message: 'Please sign in to manage your wishlist.', tone: 'error' });
+      return;
+    }
+
+    setIsLocalWishlistBusy(true);
+    try {
+      if (localWishlisted) {
+        await api.delete(`/shop/wishlist/${product.id}`);
+        setLocalWishlisted(false);
+        showToast({ title: 'Removed', message: 'Removed from wishlist.', tone: 'success' });
+      } else {
+        await api.post('/shop/wishlist', null, { params: { productId: product.id } });
+        setLocalWishlisted(true);
+        showToast({ title: 'Saved', message: 'Added to wishlist.', tone: 'success' });
+      }
+      window.dispatchEvent(new Event(SHOP_UPDATED_EVENT));
+    } catch (error) {
+      showToast({ title: 'Wishlist update failed', message: getApiErrorMessage(error, 'Unable to update wishlist.'), tone: 'error' });
+    } finally {
+      setIsLocalWishlistBusy(false);
+    }
+  };
 
   return (
     <article className="group surface-card overflow-hidden p-4 transition duration-300 hover:-translate-y-2 hover:shadow-lg">
@@ -73,18 +142,19 @@ export default function ProductCard({
         </Link>
 
         {/* Wishlist toggle */}
-        {onToggleWishlist && (
+        {(onToggleWishlist || hasAuth) && (
           <button
             type="button"
-            disabled={wishlistBusy}
-            onClick={() => onToggleWishlist(product)}
+            disabled={isWishlistDisabled}
+            onClick={handleWishlistClick}
             className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full shadow-sm transition ${
-              isWishlisted
+              isWishlistActive
                 ? 'bg-red-500 text-white hover:bg-red-600'
                 : 'bg-white/90 text-slate-600 hover:bg-white hover:text-red-500 dark:bg-slate-950/85 dark:text-white'
             } disabled:cursor-not-allowed disabled:opacity-60`}
+            title={isWishlistActive ? 'Remove from wishlist' : 'Add to wishlist'}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isWishlisted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isWishlistActive ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
           </button>
@@ -118,6 +188,32 @@ export default function ProductCard({
           {compareAtPrice && (
             <p className="text-sm text-[var(--color-text-soft)] line-through">${compareAtPrice}</p>
           )}
+        </div>
+
+        <div className="grid grid-cols-[1fr_auto] gap-2 pt-2">
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={isCartBusy || product.stockCount <= 0}
+            className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isCartBusy ? 'Adding...' : 'Add to cart'}
+          </button>
+          <button
+            type="button"
+            onClick={handleWishlistClick}
+            disabled={isWishlistDisabled}
+            className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
+              isWishlistActive
+                ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-red-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+            } disabled:cursor-not-allowed disabled:opacity-60`}
+            title={isWishlistActive ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill={isWishlistActive ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
         </div>
       </div>
     </article>

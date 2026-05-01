@@ -135,7 +135,7 @@ export default function ProfilePage({ auth }) {
                       Order #{order.id}
                     </p>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                      {order.placedAt ? new Date(order.placedAt).toLocaleDateString() : 'N/A'}
                     </p>
                     {['PLACED', 'PENDING'].includes(order.status) && (
                       <button

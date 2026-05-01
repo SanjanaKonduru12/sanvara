@@ -83,8 +83,9 @@ The backend data model supports:
 
 ### Backend
 
-1. Configure MySQL connection in `backend/src/main/resources/application.yml`.
-2. Run:
+The backend can run locally without MySQL. It falls back to a local H2 database and seeds demo catalog data automatically.
+
+Run:
 
 ```bash
 cd backend
@@ -108,7 +109,45 @@ npm run dev
 
 The frontend runs on Vite locally and calls the API configured by `VITE_API_BASE_URL`.
 
+## Deploy on Render with Aiven MySQL
+
+This repo includes `render.yaml` for a Render backend web service and frontend static site.
+
+### Backend environment variables
+
+Set these in the Render backend service:
+
+```env
+SPRING_PROFILES_ACTIVE=prod
+PORT=8080
+MYSQLHOST=mysql-acdf045-sanvara.l.aivencloud.com
+MYSQLPORT=10406
+MYSQLDATABASE=defaultdb
+MYSQLUSER=avnadmin
+MYSQLPASSWORD=your_aiven_password
+MYSQL_SSL_MODE=REQUIRED
+APP_SEED_ENABLED=true
+APP_JWT_SECRET=generate_a_long_random_secret
+APP_CORS_ALLOWED_ORIGINS=https://luminamart-frontend.onrender.com
+```
+
+If your Render frontend URL is different, replace `APP_CORS_ALLOWED_ORIGINS` with the exact frontend URL. Multiple origins must be comma-separated.
+
+### Frontend environment variables
+
+Set this in the Render frontend static site:
+
+```env
+VITE_API_BASE_URL=https://luminamart-backend.onrender.com
+```
+
+If your Render backend URL is different, replace the value with the exact backend URL.
+
+### Important security note
+
+Do not commit real database passwords or JWT secrets. Keep them only in Render/Aiven environment variable dashboards.
+
 ## Notes
 
-- Update `app.cors.allowed-origins` in `backend/src/main/resources/application.yml` if the frontend runs on a different host.
+- Update `APP_CORS_ALLOWED_ORIGINS` if the frontend runs on a different host.
 - The backend bootstraps demo categories, moods, and sample products on first startup.
