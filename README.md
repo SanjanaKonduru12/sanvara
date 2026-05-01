@@ -119,7 +119,7 @@ Set these in the Render backend service:
 
 ```env
 SPRING_PROFILES_ACTIVE=prod
-PORT=8080
+SERVER_PORT=8080
 MYSQLHOST=mysql-acdf045-sanvara.l.aivencloud.com
 MYSQLPORT=10406
 MYSQLDATABASE=defaultdb
