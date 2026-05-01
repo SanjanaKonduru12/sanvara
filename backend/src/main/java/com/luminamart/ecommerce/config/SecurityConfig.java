@@ -48,6 +48,7 @@ public class SecurityConfig {
                         (request, response, authException) -> response.sendError(401, "Authentication required")
                 ))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/health").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                         .requestMatchers("/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/reset-password").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET,

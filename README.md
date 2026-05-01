@@ -128,7 +128,7 @@ MYSQLPASSWORD=your_aiven_password
 MYSQL_SSL_MODE=REQUIRED
 APP_SEED_ENABLED=true
 APP_JWT_SECRET=generate_a_long_random_secret
-APP_CORS_ALLOWED_ORIGINS=https://luminamart-frontend.onrender.com
+APP_CORS_ALLOWED_ORIGINS=https://sanvara.onrender.com
 ```
 
 If your Render frontend URL is different, replace `APP_CORS_ALLOWED_ORIGINS` with the exact frontend URL. Multiple origins must be comma-separated.
@@ -138,7 +138,7 @@ If your Render frontend URL is different, replace `APP_CORS_ALLOWED_ORIGINS` wit
 Set this in the Render frontend static site:
 
 ```env
-VITE_API_BASE_URL=https://luminamart-backend.onrender.com
+VITE_API_BASE_URL=https://sanvara-backend.onrender.com
 ```
 
 If your Render backend URL is different, replace the value with the exact backend URL.

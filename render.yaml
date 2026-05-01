@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: luminamart-backend
+    name: sanvara-backend
     env: docker
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
@@ -24,18 +24,18 @@ services:
       - key: APP_JWT_SECRET
         generateValue: true
       - key: APP_CORS_ALLOWED_ORIGINS
-        value: "https://luminamart-frontend.onrender.com,https://luminamart-frontend-production.up.railway.app"
+        value: "https://sanvara.onrender.com"
       - key: APP_SEED_ENABLED
         value: true
 
   - type: web
-    name: luminamart-frontend
+    name: sanvara
     env: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: "https://luminamart-backend.onrender.com"
+        value: "https://sanvara-backend.onrender.com"
     routes:
       - type: rewrite
         source: /*
